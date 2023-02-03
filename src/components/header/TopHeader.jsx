@@ -1,8 +1,9 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, matchPath } from "react-router-dom";
 import { sidebarData } from "../../data/data";
 
 export default function TopHeader() {
+  const { pathname } = useLocation();
   return (
     <nav className="navbar navbar-expand-lg navbar-light " id="topheader">
       <div
@@ -35,9 +36,13 @@ export default function TopHeader() {
               sidebarData.map((item, index) => {
                 if (item.dropdownList) {
                   return (
-                    <li key={index} className="nav-item dropdown active">
+                    <li key={index} className="nav-item dropdown ">
                       <Link
-                        className="nav-link dropdown-toggle"
+                        className={
+                          matchPath(item.path + "/*", pathname)
+                            ? "nav-link dropdown-toggle active"
+                            : "nav-link dropdown-toggle"
+                        }
                         to={item.path}
                         id="navbarDropdown"
                         role="button"
@@ -54,7 +59,11 @@ export default function TopHeader() {
                           return (
                             <li key={index}>
                               <Link
-                                className="dropdown-item"
+                                className={
+                                  matchPath(dropdownItem.path + "/*", pathname)
+                                    ? "dropdown-item active"
+                                    : "dropdown-item"
+                                }
                                 to={dropdownItem.path}
                               >
                                 {dropdownItem.title}
@@ -68,7 +77,14 @@ export default function TopHeader() {
                 } else {
                   return (
                     <li key={index} className="nav-item">
-                      <Link className="nav-link" to={item.path}>
+                      <Link
+                        to={item.path}
+                        className={
+                          matchPath(item.path + "/*", pathname)
+                            ? "nav-link active"
+                            : "nav-link"
+                        }
+                      >
                         {item.title}
                       </Link>
                     </li>

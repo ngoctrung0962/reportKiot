@@ -1,13 +1,63 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Form } from "react-bootstrap";
-import { TbFileExport } from "react-icons/tb";
-import { MdArrowForwardIos } from "react-icons/md";
+import tableToExcel from "@linways/table-to-excel";
 import CustomDataTable from "../../../components/CustomDataTable/CustomDataTable.component";
+import axios from "axios";
+import { TbFileExport } from "react-icons/tb";
+import PivotTableUI from "react-pivottable/PivotTableUI";
+import TableRenderers from "react-pivottable/TableRenderers";
+import createPlotlyRenderers from "react-pivottable/PlotlyRenderers";
+import createPlotlyComponent from "react-plotly.js/factory";
+const Plot = createPlotlyComponent(window.Plotly);
+const PlotlyRenderers = createPlotlyRenderers(Plot);
+
+// const renameKeys = (obj, newKeys) => {
+//   const keyValues = Object.keys(obj).map((key) => {
+//     const newKey = newKeys[key] || key;
+//     return { [newKey]: obj[key] };
+//   });
+//   return Object.assign({}, ...keyValues);
+// };
+
+// export const changeKeysToReadable = (list) => {
+//   const newList = [];
+//   list.forEach((l) => {
+//     const newKeys = {};
+
+//     Object.keys(l).forEach((k) => {
+//       newKeys[k] = k
+//         .replace(/([A-Z]+)/g, " $1")
+//         .replace(/([A-Z][a-z])/g, " $1");
+//     });
+
+//     newList.push(renameKeys(l, newKeys));
+//   });
+
+//   return newList;
+// };
+
 export default function SalesPage() {
+  const fetchData = async () => {
+    const res = await axios.get(
+      "https://638776d1d9b24b1be3f14cd4.mockapi.io/api/v1/product"
+    );
+    setData(res.data);
+    // Bỏ thuộc tính type trong res.data và thêm thuộc tính loại sản phẩm
+    const dataTemp = JSON.parse(JSON.stringify(res.data));
+    const newData = dataTemp.map((item) => {
+      item["loai"] = item.type?.name;
+      delete item.type;
+      return item;
+    });
+    setState({ data: newData });
+  };
+  useEffect(() => {
+    fetchData();
+  }, []);
   const columns = [
     {
       name: "Code",
-      selector: (row) => row.code,
+      selector: (row) => row.id,
       sortable: true,
       reorder: true,
     },
@@ -18,69 +68,20 @@ export default function SalesPage() {
       reorder: true,
     },
     {
+      name: "Loại sản phẩm",
+      selector: (row) => row.type?.name,
+      sortable: true,
+      reorder: true,
+    },
+    {
       name: "Giá",
       selector: (row) => row.price,
       sortable: true,
       reorder: true,
     },
   ];
-  const data = [
-    {
-      code: "123",
-      name: "Rượu vang đỏ",
-      price: "1.000.000",
-    },
-    {
-      code: "456",
-      name: "Rượu chuối hột",
-      price: "2.000.000",
-    },
-    {
-      code: "789",
-      name: "Rượu cồn",
-      price: "20.000",
-    },
-    {
-      code: "123",
-      name: "Rượu vang đỏ",
-      price: "1.000.000",
-    },
-    {
-      code: "123",
-      name: "Rượu vang đỏ",
-      price: "1.000.000",
-    },
-    {
-      code: "456",
-      name: "Rượu chuối hột",
-      price: "2.000.000",
-    },
-    {
-      code: "789",
-      name: "Rượu cồn",
-      price: "20.000",
-    },
-    {
-      code: "123",
-      name: "Rượu vang đỏ",
-      price: "1.000.000",
-    },
-    {
-      code: "123",
-      name: "Rượu vang đỏ",
-      price: "1.000.000",
-    },
-    {
-      code: "456",
-      name: "Rượu chuối hột",
-      price: "2.000.000",
-    },
-    {
-      code: "789",
-      name: "Rượu cồn",
-      price: "20.000",
-    },
-  ];
+  const [data, setData] = useState();
+
   const handleShowFilterTool = () => {
     const filterTool = document.querySelector(".filter__tool");
     filterTool.classList.toggle("show");
@@ -88,6 +89,72 @@ export default function SalesPage() {
     iconShowFilterTool.classList.toggle("fa-angle-right");
     iconShowFilterTool.classList.toggle("fa-angle-left");
   };
+  const [state, setState] = useState({});
+
+  // Hàm export dữ liệu ra file excel
+  const handleExportClick = () => {
+    var htmlTable = document.querySelector(".pvtTable").cloneNode(true);
+    //var htmlTable = jQuery(".pvtTable");
+
+    const htmlTableHead = htmlTable.querySelector("thead");
+    const htmlHeadRows = htmlTableHead.querySelectorAll("tr");
+    htmlHeadRows.forEach((headRow) => {
+      const htmlHeadCells = headRow.querySelectorAll("th");
+      htmlHeadCells.forEach((htmlCell) => {
+        const isAxisLabel = htmlCell.classList.contains("pvtAxisLabel");
+        const isColLabel = htmlCell.classList.contains("pvtColLabel");
+        const isTotalLabel = htmlCell.classList.contains("pvtTotalLabel");
+
+        if (isAxisLabel) {
+          htmlCell.setAttribute("data-a-h", "left");
+          htmlCell.setAttribute("data-a-v", "middle");
+        }
+        if (isColLabel) {
+          htmlCell.setAttribute("data-a-h", "center");
+          htmlCell.setAttribute("data-a-v", "middle");
+        }
+        if (isTotalLabel) {
+          // htmlCell.setAttribute("data-exclude", "true");
+          htmlCell.setAttribute("data-a-h", "center");
+          htmlCell.setAttribute("data-a-v", "middle");
+        }
+      });
+    });
+
+    const htmlTableBody = htmlTable.querySelector("tbody");
+    const htmlBodyRows = htmlTableBody.querySelectorAll("tr");
+    htmlBodyRows.forEach((bodyRow) => {
+      const htmlBodyCells = bodyRow.querySelectorAll("th, td");
+      htmlBodyCells.forEach((htmlCell) => {
+        const isRowLabel = htmlCell.classList.contains("pvtRowLabel");
+        const isValue = htmlCell.classList.contains("pvtVal");
+        const isTotal = htmlCell.classList.contains("pvtTotal");
+        const isTotalLabel = htmlCell.classList.contains("pvtTotalLabel");
+        const isGrandTotal = htmlCell.classList.contains("pvtGrandTotal");
+
+        if (isRowLabel) {
+          htmlCell.setAttribute("data-a-h", "left");
+          htmlCell.setAttribute("data-a-v", "middle");
+        }
+        if (isValue) {
+          htmlCell.setAttribute("data-a-h", "right");
+          htmlCell.setAttribute("data-a-v", "middle");
+          htmlCell.setAttribute("data-t", "n");
+        }
+        if (isTotal || isTotalLabel || isGrandTotal) {
+          // htmlCell.setAttribute("data-exclude", "true");
+          htmlCell.setAttribute("data-a-h", "right");
+          htmlCell.setAttribute("data-a-v", "middle");
+          htmlCell.setAttribute("data-t", "s");
+        }
+      });
+    });
+
+    tableToExcel.convert(htmlTable, { name: "mine.xlsx" });
+  };
+
+  // Kiểu hiển thị dữ liệu (1 là table, 2 là pivot table)
+  const [displayType, setDisplayType] = useState("1");
   return (
     <>
       <div className="content__title">
@@ -116,12 +183,29 @@ export default function SalesPage() {
               </div>
               <div className="typeOfChart__list">
                 <div className="typeOfChart__item">
-                  <input type="radio" name="typeOfChart" id="typeOfChart1" />
-                  <label htmlFor="typeOfChart1">Biểu đồ cột</label>
+                  <input
+                    type="radio"
+                    name="typeOfChart"
+                    id="typeOfChart1"
+                    value={"1"}
+                    defaultChecked={displayType === "1" ? true : false}
+                    onChange={(e) => {
+                      setDisplayType(e.target.value);
+                    }}
+                  />
+                  <label htmlFor="typeOfChart1">Dạng bảng</label>
                 </div>
                 <div className="typeOfChart__item">
-                  <input type="radio" name="typeOfChart" id="typeOfChart2" />
-                  <label htmlFor="typeOfChart2">Biểu đồ đường</label>
+                  <input
+                    type="radio"
+                    name="typeOfChart"
+                    id="typeOfChart2"
+                    value={"2"}
+                    onChange={(e) => {
+                      setDisplayType(e.target.value);
+                    }}
+                  />
+                  <label htmlFor="typeOfChart2">Dạng pivot bảng</label>
                 </div>
               </div>
             </div>
@@ -196,11 +280,41 @@ export default function SalesPage() {
               <p>Phương thức bán hàng: Tại cửa hàng</p>
             </div>
             <div className="table__content">
-              <CustomDataTable
-                columns={columns}
-                data={data}
-                selectableRows={false}
-              />
+              {displayType === "1" ? (
+                <CustomDataTable
+                  columns={columns}
+                  data={data}
+                  selectableRows={false}
+                />
+              ) : (
+                <>
+                  <button
+                    className="btn__export"
+                    onClick={() => handleExportClick()}
+                  >
+                    Xuất Excel
+                  </button>
+
+                  {/* Sử dụng chart */}
+                  <PivotTableUI
+                    //renderres
+                    renderers={Object.assign(
+                      {},
+                      TableRenderers,
+                      PlotlyRenderers
+                    )}
+                    data={data}
+                    {...state}
+                    onChange={(s) => {
+                      // if (s.derivedAttributes) {
+                      //   s.derivedAttributes = JSON.parse(s.derivedAttributes);
+                      // }
+                      setState(s);
+                    }}
+                    unusedOrientationCutoff={Infinity}
+                  />
+                </>
+              )}
             </div>
           </div>
         </div>

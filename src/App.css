@@ -102,11 +102,15 @@ a {
   padding: 4px 10px;
   font-size: 12px;
 }
-#topheader .nav-item.active {
+#topheader .nav-item a.active {
   background: transparent;
   border-radius: 5px;
-  color: var(--blue);
   border: 1px solid #fff;
+}
+
+#topheader .nav-item .dropdown-item.active {
+  background: var(--blue);
+  color: var(--white);
 }
 .btn__menu__nav {
   font-size: 30px;
@@ -290,9 +294,13 @@ a {
   border-radius: 5px;
   height: auto;
   min-height: 70vh;
+  overflow-x: auto;
 }
 .content__table {
   padding: 10px;
+}
+.table__content {
+  overflow-x: auto;
 }
 .content__table .table__listTitle {
   text-align: center;
@@ -376,4 +384,23 @@ a {
   .content__r {
     margin-left: 0;
   }
+}
+.btn__export {
+  float: right;
+  margin-right: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: var(--blue);
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
 }
